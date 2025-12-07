@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>AIS 선박 클러스터 지도 (OpenStreetMap)</title>
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    />
+
+    <!-- Leaflet MarkerCluster CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+    />
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+    />
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 클러스터 색상 커스터마이징 */
+        .marker-cluster-small {
+            background-color: rgba(0, 150, 0, 0.6);
+        }
+        .marker-cluster-small div {
+            background-color: rgba(0, 200, 0, 0.9);
+        }
+
+        .marker-cluster-medium {
+            background-color: rgba(255, 165, 0, 0.6);
+        }
+        .marker-cluster-medium div {
+            background-color: rgba(255, 200, 0, 0.9);
+        }
+
+        .marker-cluster-large {
+            background-color: rgba(200, 0, 0, 0.6);
+        }
+        .marker-cluster-large div {
+            background-color: rgba(255, 0, 0, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
+
+    <!-- Leaflet MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <script>
+        // ====== 1. 기본 지도 세팅 (대충 한반도 동남부 쪽 / 나중에 fitBounds로 자동 조정됨) ======
+        const map = L.map("map").setView([34.5, 127.5], 7);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        // ====== 2. 클러스터 그룹 생성 (밀집도에 따라 색상 변경) ======
+        const markers = L.markerClusterGroup({
+            iconCreateFunction: function (cluster) {
+                const count = cluster.getChildCount();
+                let sizeClass = " marker-cluster-small";
+
+                // 밀집도 기준은 필요에 따라 조정
+                if (count > 30) {
+                    sizeClass = " marker-cluster-large";
+                } else if (count > 10) {
+                    sizeClass = " marker-cluster-medium";
+                }
+
+                return new L.DivIcon({
+                    html: "<div><span>" + count + "</span></div>",
+                    className: "marker-cluster" + sizeClass,
+                    iconSize: new L.Point(40, 40),
+                });
+            },
+        });
+
+        // ====== 3. JSON 파일들 로딩 ======
+        // data/aisResult0.json ~ data/aisResult45.json 가정
+        const FILE_COUNT = 128;
+        const BASE_PATH = "./ais_results/";
+
+        const fileNames = Array.from({ length: FILE_COUNT }, (_, i) => {
+            return `${BASE_PATH}aisResult${i}.json`;
+        });
+
+       async function loadAllShipPoints() {
+    const allPoints = [];
+
+    const promises = fileNames.map(async (filePath) => {
+        try {
+            const res = await fetch(filePath);
+            if (!res.ok) {
+                console.warn("파일 로드 실패:", filePath, res.status);
+                return;
+            }
+            const data = await res.json();
+
+            // 파일 구조: { mmsi: "538003729", PredResult: [ {...}, {...}, ... ] }
+            if (!data || !Array.isArray(data.PredResult)) return;
+
+            const track = data.PredResult;
+            if (track.length === 0) return;
+
+            // 🔹 여기서 track 전체(모든 SEQ)를 순회
+            track.forEach((pt) => {
+                const lat = pt.AFTER_LAT;
+                const lon = pt.AFTER_LON;
+
+                if (typeof lat !== "number" || typeof lon !== "number") return;
+
+                allPoints.push({
+                    mmsi: data.mmsi || "UNKNOWN",
+                    lat: lat,
+                    lon: lon,
+                    sog: pt.SOG,
+                    time: pt.ARRIVALTIME,
+                    seq: pt.SEQ
+                });
+            });
+        } catch (err) {
+            console.error("파일 파싱 오류:", filePath, err);
+        }
+    });
+
+    await Promise.all(promises);
+    return allPoints;
+}
+
+        // ====== 4. 로딩 후 지도에 클러스터로 표시 ======
+        (async () => {
+            const points = await loadAllShipPoints();
+
+            if (!points || points.length === 0) {
+                console.warn("표시할 선박 데이터가 없습니다.");
+                return;
+            }
+
+            points.forEach((ship) => {
+                const marker = L.circleMarker([ship.lat, ship.lon], {
+                    radius: 5,
+                });
+
+                marker.bindPopup(
+                    `<b>MMSI:</b> ${ship.mmsi}<br>` +
+                    `<b>SOG:</b> ${ship.sog ?? "-"} kn<br>` +
+                    `<b>ARRIVALTIME:</b> ${ship.time ?? "-"}<br>` +
+                    `<b>Lat:</b> ${ship.lat.toFixed(5)}<br>` +
+                    `<b>Lon:</b> ${ship.lon.toFixed(5)}`
+                );
+
+                markers.addLayer(marker);
+            });
+
+            map.addLayer(markers);
+
+            // 모든 마커가 보이도록 지도 영역 맞추기
+            const bounds = markers.getBounds();
+            if (bounds.isValid()) {
+                map.fitBounds(bounds.pad(0.2));
+            }
+        })();
+    </script>
+</body>
+</html>

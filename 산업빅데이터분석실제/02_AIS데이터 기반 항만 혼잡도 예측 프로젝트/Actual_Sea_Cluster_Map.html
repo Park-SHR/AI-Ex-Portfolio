@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>AIS 선박 클러스터 지도 (OpenStreetMap)</title>
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    />
+
+    <!-- Leaflet MarkerCluster CSS -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"
+    />
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"
+    />
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 클러스터 색상 커스터마이징 */
+        .marker-cluster-small {
+            background-color: rgba(0, 150, 0, 0.6);
+        }
+        .marker-cluster-small div {
+            background-color: rgba(0, 200, 0, 0.9);
+        }
+
+        .marker-cluster-medium {
+            background-color: rgba(255, 165, 0, 0.6);
+        }
+        .marker-cluster-medium div {
+            background-color: rgba(255, 200, 0, 0.9);
+        }
+
+        .marker-cluster-large {
+            background-color: rgba(200, 0, 0, 0.6);
+        }
+        .marker-cluster-large div {
+            background-color: rgba(255, 0, 0, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
+
+    <!-- Leaflet MarkerCluster JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+
+
+    <script>
+        // ====== 1. 기본 지도 세팅 ======
+        const map = L.map("map").setView([34.5, 127.5], 7);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        // ====== 2. 클러스터 그룹 생성 (밀집도에 따라 색상 변경) ======
+        const markers = L.markerClusterGroup({
+            iconCreateFunction: function (cluster) {
+                const count = cluster.getChildCount();
+                let sizeClass = " marker-cluster-small";
+
+                if (count > 30) {
+                    sizeClass = " marker-cluster-large";
+                } else if (count > 10) {
+                    sizeClass = " marker-cluster-medium";
+                }
+
+                return new L.DivIcon({
+                    html: "<div><span>" + count + "</span></div>",
+                    className: "marker-cluster" + sizeClass,
+                    iconSize: new L.Point(40, 40),
+                });
+            },
+        });
+
+        // ====== 3. 최종 혼잡도 결과 JSON 로딩 ======
+        const DATA_FILE = "./ais_results/ship_congestion_result.json";
+
+        function getColorByCongestion(congestion) {
+            // 1: 혼잡(빨강), 0: 정상(파랑)
+            return congestion === 1 ? "red" : "blue";
+        }
+
+        async function loadCongestionPoints() {
+            try {
+                const res = await fetch(DATA_FILE);
+                if (!res.ok) {
+                    console.error("JSON 로드 실패:", DATA_FILE, res.status);
+                    return [];
+                }
+                const data = await res.json();
+                if (!data || !Array.isArray(data.ships)) {
+                    console.warn("ships 배열이 없습니다:", data);
+                    return [];
+                }
+                return data.ships;
+            } catch (err) {
+                console.error("JSON 파싱 오류:", err);
+                return [];
+            }
+        }
+
+        // ====== 4. 로딩 후 지도에 클러스터로 표시 ======
+        (async () => {
+            const points = await loadCongestionPoints();
+
+            if (!points || points.length === 0) {
+                console.warn("표시할 선박 데이터가 없습니다.");
+                return;
+            }
+
+            points.forEach((ship) => {
+                if (typeof ship.lat !== "number" || typeof ship.lon !== "number") {
+                    return;
+                }
+
+                const color = getColorByCongestion(ship.congestion);
+
+                const marker = L.circleMarker([ship.lat, ship.lon], {
+                    radius: 6,
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.8,
+                });
+
+                marker.bindPopup(
+                    `<b>MMSI:</b> ${ship.mmsi}<br>` +
+                    `<b>Cluster:</b> ${ship.cluster}<br>` +
+                    `<b>혼잡도:</b> ${ship.congestion === 1 ? "혼잡(High)" : "정상(Low)"}<br>` +
+                    `<b>Dwell Hours:</b> ${ship.dwell_hours?.toFixed ? ship.dwell_hours.toFixed(2) : ship.dwell_hours}<br>` +
+                    `<b>Total Distance:</b> ${ship.total_distance?.toFixed ? ship.total_distance.toFixed(2) : ship.total_distance}<br>` +
+                    `<b>Mean SOG:</b> ${ship.mean_sog?.toFixed ? ship.mean_sog.toFixed(2) : ship.mean_sog}`
+                );
+
+                markers.addLayer(marker);
+            });
+
+            map.addLayer(markers);
+
+            const bounds = markers.getBounds();
+            if (bounds.isValid()) {
+                map.fitBounds(bounds.pad(0.2));
+            }
+        })();
+    </script>
+</body>
+</html>
