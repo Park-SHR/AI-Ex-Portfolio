@@ -1,0 +1,2 @@
+﻿model,Top1Acc,Top3Acc,classes
+RouteChoiceRF,0.3125,0.9375,"[1, 2, 3, 4]"
