@@ -1,6 +1,0 @@
-﻿sop_type,origin_type,dest_type,priority,base_service_s,description
-DISCHARGE_QC_TO_YARD,QC,YARD_BLOCK,3,120,양하: QC 인수 후 Yard 장치
-LOADING_YARD_TO_QC,YARD_BLOCK,QC,3,135,선적: Yard 반출 후 QC 인도
-GATE_TO_YARD,GATE,YARD_BLOCK,2,180,반입: Gate에서 Yard로 이동
-YARD_TO_GATE,YARD_BLOCK,GATE,2,160,반출: Yard에서 Gate로 이동
-YARD_REHANDLE,YARD_BLOCK,YARD_BLOCK,1,210,야드 내 재배치/대기/우회
