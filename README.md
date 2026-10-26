@@ -5,3 +5,5 @@
 <img width="738" height="292" alt="image" src="https://github.com/user-attachments/assets/edf8a0b5-8240-44e1-b306-c1cad5a9a63c" />
 
 
+## [졸업프로젝트 관련 연구자료]
+https://drive.google.com/drive/folders/1oD_7oxQyQK0XFk3cnszHKYrgF_CCcJkc?usp=sharing
