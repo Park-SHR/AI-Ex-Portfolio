@@ -1,0 +1,23 @@
+{
+  "freeze_version": "HJNC_Model_Graph_v05",
+  "base_geometry": "HJNC_Node_Link_Review_v03",
+  "link_nodes": 1007,
+  "directed_model_edges": 5900,
+  "edge_source_counts": {
+    "EMPIRICAL_TRAIN": 4949,
+    "BOTH": 762,
+    "CAD_RULE": 189
+  },
+  "weak_components": 4,
+  "largest_weak_component_links": 1004,
+  "strong_components": 23,
+  "largest_strong_component_links": 985,
+  "zero_out_degree_links": 6,
+  "zero_in_degree_links": 17,
+  "isolated_links": 3,
+  "holdout_weighted_transition_coverage": 0.9829004480537664,
+  "holdout_unique_transition_coverage": 0.8354404567699837,
+  "freeze_rule": "CAD analysis_routing_enabled=1 OR TRAIN empirical clean transition count>=2; explicit prohibited_by_symbol excluded; endpoint gap<=5 for empirical edges.",
+  "holdout_used_for_freeze": false,
+  "operational_routing_approval": false
+}

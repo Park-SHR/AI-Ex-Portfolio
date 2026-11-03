@@ -1,0 +1,80 @@
+{
+  "route_mlp_real": {
+    "context_len": 8,
+    "embedding_dim": 32,
+    "hidden_dim": 128,
+    "classes": 1007,
+    "padding_idx": 1007
+  },
+  "route_mlp_augmented": {
+    "context_len": 8,
+    "embedding_dim": 32,
+    "hidden_dim": 128,
+    "classes": 1007,
+    "padding_idx": 1007
+  },
+  "route_lstm_augmented": {
+    "context_len": 8,
+    "embedding_dim": 24,
+    "hidden_dim": 48,
+    "classes": 1007,
+    "padding_idx": 1007
+  },
+  "route_gru_augmented": {
+    "context_len": 8,
+    "embedding_dim": 24,
+    "hidden_dim": 48,
+    "classes": 1007,
+    "padding_idx": 1007
+  },
+  "concentration_lstm": {
+    "history_bins": 6,
+    "feature_dim": 4,
+    "embedding_dim": 16,
+    "hidden_dim": 64,
+    "outputs": 3,
+    "horizons": [
+      5,
+      10,
+      30
+    ]
+  },
+  "concentration_gru": {
+    "history_bins": 6,
+    "feature_dim": 4,
+    "embedding_dim": 16,
+    "hidden_dim": 64,
+    "outputs": 3,
+    "horizons": [
+      5,
+      10,
+      30
+    ]
+  },
+  "concentration_gcn_gru": {
+    "history_bins": 6,
+    "feature_dim": 5,
+    "graph_feature": "one-hop A_row_normalized * link_share",
+    "pre_dim": 24,
+    "embedding_dim": 16,
+    "hidden_dim": 64,
+    "outputs": 3,
+    "horizons": [
+      5,
+      10,
+      30
+    ]
+  },
+  "lightgbm_features": [
+    "share_lag0..5",
+    "neighbor_share_lag0..2",
+    "runshare_lag0..1",
+    "log_duration",
+    "log_delay",
+    "link_id categorical",
+    "road_band categorical",
+    "link_length_z",
+    "sin_time",
+    "cos_time"
+  ]
+}
