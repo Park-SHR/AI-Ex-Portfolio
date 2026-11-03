@@ -1,0 +1,40 @@
+{
+  "input_archive": "TosIFB_Replay_all_20260106-20260108.zip",
+  "network_version": "HJNC_Node_Link_Review_v03",
+  "map_transform": {
+    "type": "translation_only_candidate",
+    "cad_x": "tos_x + 358.0",
+    "cad_y": "tos_y + 469.75",
+    "operationally_verified": false
+  },
+  "raw_coordinate_rows_including_missing": 5685233,
+  "coordinate_rows_with_numeric_xy": 5677958,
+  "missing_xy_skipped": 7275,
+  "gross_coordinate_outliers": 3,
+  "unique_yt": 102,
+  "match_threshold_local": 10.0,
+  "within_3_count": 3046007,
+  "within_3_pct": 53.64616997871418,
+  "within_5_count": 3645808,
+  "within_5_pct": 64.20984445464373,
+  "within_10_count": 4120440,
+  "within_10_pct": 72.56904682986384,
+  "within_20_count": 4506667,
+  "within_20_pct": 79.3712634013848,
+  "median_match_distance_local": 2.433823347091675,
+  "p90_match_distance_local": 57.82000732421875,
+  "p95_match_distance_local": 86.83001708984375,
+  "speed_jump_flags_not_silently_deleted": 533,
+  "conservative_sequence_points": 4120119,
+  "link_sequence_runs": 349135,
+  "used_links": 1004,
+  "total_links": 1007,
+  "used_lanes": 49,
+  "total_lanes": 49,
+  "notes": [
+    "Spatial coverage against current v03 main-yard graph; not a ground-truth lane accuracy rate.",
+    "Gross coordinate outliers retained as status=0/accepted=0.",
+    "Speed-jump diagnostics retained point-level and excluded only from conservative link sequence.",
+    "Gate/North/Apron and some turn connectors remain incomplete, so unmatched residuals include graph incompleteness."
+  ]
+}

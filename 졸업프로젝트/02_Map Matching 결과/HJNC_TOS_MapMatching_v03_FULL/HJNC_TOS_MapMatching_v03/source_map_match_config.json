@@ -1,0 +1,18 @@
+{
+  "status": "research_precheck",
+  "source_coordinate": "TOS Terminal x/y",
+  "target_coordinate": "CAD local",
+  "transform": {
+    "type": "translation_only_candidate",
+    "x": "tos_x + 358.00",
+    "y": "tos_y + 469.75"
+  },
+  "candidate_distance_thresholds_local": [5, 10, 20],
+  "recommended_initial_threshold_local": 10,
+  "operationally_verified": false,
+  "notes": [
+    "Use only as initial Map Matching configuration.",
+    "Gate/North/Apron are not fully reconstructed, so points in those areas can show large residuals.",
+    "Final transform should be re-estimated with control points or verified TOS-CAD anchors."
+  ]
+}
